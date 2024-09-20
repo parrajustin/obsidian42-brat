@@ -9,6 +9,8 @@ bun.lockb
 # build
 build
 *.js.map
+dist/**/*
 
 # other
 **/.DS_Store
+

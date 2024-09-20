@@ -4,7 +4,6 @@ import {
   grabCommmunityThemeCssFile,
   grabLastCommitDateForFile,
 } from '../features/githubUtils';
-import { themeSave, themeDelete, themesCheckAndUpdates } from '../features/themes';
 
 // This module is for API access for use in debuging console
 
@@ -20,20 +19,6 @@ export default class BratAPI {
   };
 
   themes = {
-    themeseCheckAndUpates: async (showInfo: boolean): Promise<void> => {
-      await themesCheckAndUpdates(this.plugin, showInfo);
-    },
-
-    themeInstallTheme: async (cssGithubRepository: string): Promise<void> => {
-      const scrubbedAddress = cssGithubRepository.replace('https://github.com/', '');
-      await themeSave(this.plugin, scrubbedAddress, true);
-    },
-
-    themesDelete: (cssGithubRepository: string): void => {
-      const scrubbedAddress = cssGithubRepository.replace('https://github.com/', '');
-      themeDelete(this.plugin, scrubbedAddress);
-    },
-
     grabCommmunityThemeCssFile: async (
       repositoryPath: string,
       betaVersion = false

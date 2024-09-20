@@ -6,8 +6,6 @@ import {
   grabCommmunityPluginList,
   grabCommmunityThemesList,
 } from '../features/githubUtils';
-import { themesCheckAndUpdates } from '../features/themes';
-import AddNewTheme from './AddNewTheme';
 import { toastMessage } from '../utils/notifications';
 import type { SettingTab } from 'obsidian';
 

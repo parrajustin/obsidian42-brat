@@ -275,7 +275,6 @@ export default class BetaPlugins {
     const getRelease = async () => {
       const rFiles = await this.getAllReleaseFiles(
         repositoryPath,
-        // @ts-expect-error typescript will complain that this can be null, but in this case it won't be
         primaryManifest,
         usingBetaManifest,
         specifyVersion
@@ -483,8 +482,10 @@ export default class BetaPlugins {
     let newNotice: Notice | undefined;
     const msg1 = `Checking for plugin updates STARTED`;
     await this.plugin.log(msg1, true);
-    if (showInfo && this.plugin.settings.notificationsEnabled)
+    if (showInfo && this.plugin.settings.notificationsEnabled) {
       newNotice = new Notice(`BRAT\n${msg1}`, 30000);
+    }
+
     const pluginSubListFrozenVersionNames = new Set(
       this.plugin.settings.pluginSubListFrozenVersion.map((f) => f.repo)
     );

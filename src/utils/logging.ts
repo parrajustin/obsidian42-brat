@@ -1,7 +1,6 @@
 import type ThePlugin from '../main';
 import type { TFile } from 'obsidian';
-import { moment, Platform } from 'obsidian';
-import { getDailyNoteSettings } from 'obsidian-daily-notes-interface';
+import { Platform } from 'obsidian';
 
 /**
  * Logs events to a log file
@@ -22,11 +21,7 @@ export async function logger(
       return;
     } else {
       const fileName = plugin.settings.loggingPath + '.md';
-      const dateOutput =
-        '[[' +
-        moment().format(getDailyNoteSettings().format).toString() +
-        ']] ' +
-        moment().format('HH:mm');
+      const dateOutput = window.moment().format('HH:mm');
       const os = window.require('os') as { hostname: () => string };
       const machineName = Platform.isDesktop ? os.hostname() : 'MOBILE';
       let output =

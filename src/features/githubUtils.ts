@@ -3,6 +3,7 @@ import { request } from 'obsidian';
 
 const GITHUB_RAW_USERCONTENT_PATH = 'https://raw.githubusercontent.com/';
 
+/** Checks if the repo is private */
 const isPrivateRepo = async (
   repository: string,
   debugLogging = true,
@@ -314,9 +315,17 @@ export const grabLastCommitDateForFile = async (
   path: string
 ): Promise<string> => {
   const test: CommitInfo[] | null = await grabLastCommitInfoForFile(repositoryPath, path);
-  if (test && test.length > 0 && test[0].commit.committer?.date) {
-    return test[0].commit.committer.date;
-  } else {
-    return '';
+  if (test === null || test.length <= 0) {
+    return "";
   }
+  const committer = (test[0] as CommitInfo).commit.committer;
+  if (committer === undefined) {
+    return "";
+  }
+  const date = committer.date;
+  if (date === undefined) {
+    return "";
+  }
+
+  return date;
 };

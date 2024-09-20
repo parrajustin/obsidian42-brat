@@ -1,8 +1,6 @@
 import type ThePlugin from '../main';
 import type { App, ToggleComponent, ButtonComponent } from 'obsidian';
 import { PluginSettingTab, Setting } from 'obsidian';
-import { themeDelete } from '../features/themes';
-import AddNewTheme from './AddNewTheme';
 import { promotionalLinks } from './Promotional';
 
 const createLink = (githubResource: string, optionalText?: string): DocumentFragment => {
@@ -142,37 +140,6 @@ export class BratSettingsTab extends PluginSettingTab {
               if (parentElement?.parentElement) {
                 parentElement.parentElement.remove();
                 this.plugin.betaPlugins.deletePlugin(bp.repo);
-              }
-            }
-          });
-        });
-    }
-
-    containerEl.createEl('h2', { text: 'Beta Themes List' });
-
-    new Setting(containerEl).addButton((cb: ButtonComponent) => {
-      cb.setButtonText('Add Beta Theme');
-      cb.onClick(() => {
-        this.plugin.app.setting.close();
-        new AddNewTheme(this.plugin).open();
-      });
-    });
-
-    for (const bp of this.plugin.settings.themesList) {
-      new Setting(containerEl)
-        .setName(createLink(bp.repo))
-        .addButton((btn: ButtonComponent) => {
-          btn.setIcon('cross');
-          btn.setTooltip('Delete this beta theme');
-          btn.onClick(() => {
-            if (btn.buttonEl.textContent === '')
-              btn.setButtonText('Click once more to confirm removal');
-            else {
-              const { buttonEl } = btn;
-              const { parentElement } = buttonEl;
-              if (parentElement?.parentElement) {
-                parentElement.parentElement.remove();
-                themeDelete(this.plugin, bp.repo);
               }
             }
           });
