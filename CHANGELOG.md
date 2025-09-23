@@ -1,18 +1,36 @@
-# 1.0.3
+# Changelog
+
+## [2.0.0](https://github.com/parrajustin/obsidian42-brat/compare/1.0.1...v2.0.0) (2025-09-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* New build pipeline
+
+### Features
+
+* New build pipeline ([d8f4bb2](https://github.com/parrajustin/obsidian42-brat/commit/d8f4bb202c3cc69c759435902acd3421ff82f2f9))
+
+
+### Bug Fixes
+
+* update some configs ([6450e52](https://github.com/parrajustin/obsidian42-brat/commit/6450e529d072132dddfd401dd4cddbd9fee69f6e))
+
+## 1.0.3
 
 ### fix
 
 - modified main.ts to better conform to obdisidan.dt.ts
 - chore: update all dependencies.
 
-# 1.0.2
+## 1.0.2
 
 ### Fix
 
 - Improved the update logic to better handle when a personal access token has failed.
 - chore: update all dependencies.
 
-# 1.0.1
+## 1.0.1
 
 ### New
 
@@ -20,21 +38,21 @@
 - BRAT is no longer in beta, though it will always be in beta since we add new features. So I am bumping this up to 1.0.0.
 - Moved the build process to use GitHub Actions. This will allow for more automation in the future.
 
-# 0.8.3
+## 0.8.3
 
 ### Fix
 
 - New auto-enable for new plugin installs not persisting the enabled state. (Issue: https://github.com/TfTHacker/obsidian42-brat/issues/74)
 - chore: update all dependencies.
 
-# 0.8.2
+## 0.8.2
 
 ### New
 
 - A new setting controls if a beta plugin is auto-enabled after installation. This means after it is installed, it will be enabled in settings. This reduces the additional step of manually enabling a plugin after installation. This setting is now enabled by default.
 - chore: update all dependencies.
 
-# 0.8.1
+## 0.8.1
 
 ### New
 
@@ -46,7 +64,7 @@
 
 - Bug introduced with 8.02 when manifest-beta.json is used that a plugin will not installed. (https://github.com/TfTHacker/obsidian42-brat/issues/71) Thank you for reporting this [mProjectsCode](https://github.com/mProjectsCode).
 
-# 0.8.0
+## 0.8.0
 
 ### New
 
@@ -56,7 +74,7 @@
 - **Major** code refactoring - the goal was to make this strongly typed according to Typescript rules and additionally applied a new protocol to the formatting of the code. The result is extensive changes in all files. While this won't mean a lot to users, it will make the code easier to maintain and understand for others.
 - chore: update all dependencies.
 
-# 0.7.1
+## 0.7.1
 
 ### New
 
@@ -70,7 +88,7 @@
 
 - updated to the newest esbuild and also all project dependencies
 
-# 0.7.0
+## 0.7.0
 
 ## Major updates to **THEMES** support
 
@@ -90,7 +108,7 @@
 
 ---
 
-# 0.6.37
+## 0.6.37
 
 - Bug fixes
 - Updating core libraries
