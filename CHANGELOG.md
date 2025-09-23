@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/parrajustin/obsidian42-brat/compare/v2.1.0...v2.1.1) (2025-09-23)
+
+
+### Bug Fixes
+
+* remove uncessary file ([bf55cd5](https://github.com/parrajustin/obsidian42-brat/commit/bf55cd510ba7856f4e1210f5cc1bba953823660a))
+
 ## [2.1.0](https://github.com/parrajustin/obsidian42-brat/compare/v2.0.0...v2.1.0) (2025-09-23)
 
 
