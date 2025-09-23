@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.1.0](https://github.com/parrajustin/obsidian42-brat/compare/v2.0.0...v2.1.0) (2025-09-23)
+
+
+### Features
+
+* Add my own fixed plugins ([436c570](https://github.com/parrajustin/obsidian42-brat/commit/436c57041fae72d60f8a5e3eb18c9332167d49db))
+* add version to plugin list ([972527b](https://github.com/parrajustin/obsidian42-brat/commit/972527b40bd07df20976a0ffd1a64a8d500ea9ee))
+
+
+### Bug Fixes
+
+* add missing plugins ([e14cfd8](https://github.com/parrajustin/obsidian42-brat/commit/e14cfd8d9be104266ece07ce6394551c915955fe))
+
 ## [2.0.0](https://github.com/parrajustin/obsidian42-brat/compare/1.0.1...v2.0.0) (2025-09-23)
 
 
