@@ -51,7 +51,7 @@ const context = await esbuild.context({
     treeShaking: true,
     minify: prod,
     outdir: "dist",
-    metafile: prod
+    metafile: true
 });
 
 if (prod || !watch) {

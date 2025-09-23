@@ -1,7 +1,6 @@
 import type ThePlugin from "../main";
 import type { App, ToggleComponent, ButtonComponent } from "obsidian";
 import { PluginSettingTab, Setting } from "obsidian";
-import { promotionalLinks } from "./Promotional";
 
 const createLink = (githubResource: string, optionalText?: string): DocumentFragment => {
     const newLink = new DocumentFragment();
@@ -67,7 +66,6 @@ export class BratSettingsTab extends PluginSettingTab {
                 });
             });
 
-        promotionalLinks(containerEl, true);
         containerEl.createEl("hr");
         containerEl.createEl("h2", { text: "Beta Plugin List" });
         containerEl.createEl("div", {
@@ -98,22 +96,30 @@ export class BratSettingsTab extends PluginSettingTab {
             if (pluginSubListFrozenVersionNames.has(bp)) {
                 continue;
             }
-            new Setting(containerEl).setName(createLink(bp)).addButton((btn: ButtonComponent) => {
-                btn.setIcon("cross");
-                btn.setTooltip("Delete this beta plugin");
-                btn.onClick(() => {
-                    if (btn.buttonEl.textContent === "")
-                        btn.setButtonText("Click once more to confirm removal");
-                    else {
-                        const { buttonEl } = btn;
-                        const { parentElement } = buttonEl;
-                        if (parentElement?.parentElement) {
-                            parentElement.parentElement.remove();
-                            this.plugin.betaPlugins.deletePlugin(bp);
+            let pluginVersion = "NULL";
+            const pluginSplit = bp.split("/")[1]!;
+            const plugin = this.plugin.app.plugins.plugins[pluginSplit];
+            if (plugin !== undefined) {
+                pluginVersion = plugin.manifest.version;
+            }
+            new Setting(containerEl)
+                .setName(createLink(bp, ` (version ${pluginVersion})`))
+                .addButton((btn: ButtonComponent) => {
+                    btn.setIcon("cross");
+                    btn.setTooltip("Delete this beta plugin");
+                    btn.onClick(() => {
+                        if (btn.buttonEl.textContent === "")
+                            btn.setButtonText("Click once more to confirm removal");
+                        else {
+                            const { buttonEl } = btn;
+                            const { parentElement } = buttonEl;
+                            if (parentElement?.parentElement) {
+                                parentElement.parentElement.remove();
+                                this.plugin.betaPlugins.deletePlugin(bp);
+                            }
                         }
-                    }
+                    });
                 });
-            });
         }
 
         new Setting(containerEl).addButton((cb: ButtonComponent) => {

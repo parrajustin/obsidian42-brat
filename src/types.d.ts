@@ -10,6 +10,7 @@ declare global {
 interface ExtendedPluginTab extends PluginSettingTab {
     name: string;
     id: string;
+    versin: string;
 }
 
 declare module "obsidian" {

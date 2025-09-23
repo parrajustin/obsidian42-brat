@@ -2,7 +2,6 @@ import type ThePlugin from "../main";
 import { Modal, Setting } from "obsidian";
 import type BetaPlugins from "../features/BetaPlugins";
 import { ToastMessage } from "../utils/notifications";
-import { promotionalLinks } from "./Promotional";
 import { ExistBetaPluginInList } from "../settings";
 
 /**
@@ -129,7 +128,6 @@ export default class AddNewPluginModal extends Modal {
             byTfThacker.innerHTML = "BRAT by <a href='https://bit.ly/o42-twitter'>TFTHacker</a>";
             byTfThacker.style.fontStyle = "italic";
             newDiv.appendChild(byTfThacker);
-            promotionalLinks(newDiv, false);
 
             window.setTimeout(() => {
                 const title = formEl.querySelectorAll(".brat-modal .setting-item-info");
