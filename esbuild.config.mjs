@@ -69,6 +69,6 @@ const data = await readFile(manifestFile, "utf-8");
 const json = JSON.parse(data);
 
 // Update version data.
-json.version = prod ? process.env.npm_package_version : `${process.env.npm_package_version}-dev`;
+json.version = prod ? `v${process.env.npm_package_version}` : `v${process.env.npm_package_version}-dev`;
 await writeFile(path.join("dist", "manifest.json"), JSON.stringify(json, undefined, 2));
 process.exit(0);
