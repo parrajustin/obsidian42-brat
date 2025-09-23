@@ -1,45 +1,45 @@
-import type ThePlugin from './main';
-import { checksumForString } from './features/githubUtils';
+import type ThePlugin from "./main";
+import { checksumForString } from "./features/githubUtils";
 
 export interface ThemeInforamtion {
-  repo: string;
-  // checksum of theme file (either theme.css or theme-beta.css)
-  lastUpdate: string;
+    repo: string;
+    // checksum of theme file (either theme.css or theme-beta.css)
+    lastUpdate: string;
 }
 
 export interface PluginFrozenVersion {
-  repo: string;
-  version: string;
+    repo: string;
+    version: string;
 }
 
 export interface Settings {
-  pluginList: string[];
-  pluginSubListFrozenVersion: PluginFrozenVersion[];
-  themesList: ThemeInforamtion[];
-  updateAtStartup: boolean;
-  updateThemesAtStartup: boolean;
-  enableAfterInstall: boolean;
-  loggingEnabled: boolean;
-  loggingPath: string;
-  loggingVerboseEnabled: boolean;
-  debuggingMode: boolean;
-  notificationsEnabled: boolean;
-  personalAccessToken?: string;
+    pluginList: string[];
+    pluginSubListFrozenVersion: PluginFrozenVersion[];
+    themesList: ThemeInforamtion[];
+    updateAtStartup: boolean;
+    updateThemesAtStartup: boolean;
+    enableAfterInstall: boolean;
+    loggingEnabled: boolean;
+    loggingPath: string;
+    loggingVerboseEnabled: boolean;
+    debuggingMode: boolean;
+    notificationsEnabled: boolean;
+    personalAccessToken?: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  pluginList: [],
-  pluginSubListFrozenVersion: [],
-  themesList: [],
-  updateAtStartup: true,
-  updateThemesAtStartup: true,
-  enableAfterInstall: true,
-  loggingEnabled: false,
-  loggingPath: 'BRAT-log',
-  loggingVerboseEnabled: false,
-  debuggingMode: false,
-  notificationsEnabled: true,
-  personalAccessToken: '',
+    pluginList: [],
+    pluginSubListFrozenVersion: [],
+    themesList: [],
+    updateAtStartup: true,
+    updateThemesAtStartup: true,
+    enableAfterInstall: true,
+    loggingEnabled: false,
+    loggingPath: "BRAT-log",
+    loggingVerboseEnabled: false,
+    debuggingMode: false,
+    notificationsEnabled: true,
+    personalAccessToken: ""
 };
 
 /**
@@ -49,30 +49,30 @@ export const DEFAULT_SETTINGS: Settings = {
  * @param  repositoryPath - path to the GitHub repository
  * @param  specifyVersion  - if the plugin needs to stay at the frozen version, we need to also record the version
  */
-export function addBetaPluginToList(
-  plugin: ThePlugin,
-  repositoryPath: string,
-  specifyVersion = ''
+export function AddBetaPluginToList(
+    plugin: ThePlugin,
+    repositoryPath: string,
+    specifyVersion = ""
 ): void {
-  let save = false;
-  if (!plugin.settings.pluginList.contains(repositoryPath)) {
-    plugin.settings.pluginList.unshift(repositoryPath);
-    save = true;
-  }
-  if (
-    specifyVersion !== '' &&
-    plugin.settings.pluginSubListFrozenVersion.filter((x) => x.repo === repositoryPath)
-      .length === 0
-  ) {
-    plugin.settings.pluginSubListFrozenVersion.unshift({
-      repo: repositoryPath,
-      version: specifyVersion,
-    });
-    save = true;
-  }
-  if (save) {
-    void plugin.saveSettings();
-  }
+    let save = false;
+    if (!plugin.settings.pluginList.contains(repositoryPath)) {
+        plugin.settings.pluginList.unshift(repositoryPath);
+        save = true;
+    }
+    if (
+        specifyVersion !== "" &&
+        plugin.settings.pluginSubListFrozenVersion.filter((x) => x.repo === repositoryPath)
+            .length === 0
+    ) {
+        plugin.settings.pluginSubListFrozenVersion.unshift({
+            repo: repositoryPath,
+            version: specifyVersion
+        });
+        save = true;
+    }
+    if (save) {
+        void plugin.saveSettings();
+    }
 }
 
 /**
@@ -82,11 +82,8 @@ export function addBetaPluginToList(
  * @param repositoryPath - path to the GitHub repository
  *
  */
-export function existBetaPluginInList(
-  plugin: ThePlugin,
-  repositoryPath: string
-): boolean {
-  return plugin.settings.pluginList.contains(repositoryPath);
+export function ExistBetaPluginInList(plugin: ThePlugin, repositoryPath: string): boolean {
+    return plugin.settings.pluginList.contains(repositoryPath);
 }
 
 /**
@@ -97,17 +94,17 @@ export function existBetaPluginInList(
  * @param themeCss - raw text of the theme. It is checksummed and this is used for tracking if changes occurred to the theme
  *
  */
-export function addBetaThemeToList(
-  plugin: ThePlugin,
-  repositoryPath: string,
-  themeCss: string
+export function AddBetaThemeToList(
+    plugin: ThePlugin,
+    repositoryPath: string,
+    themeCss: string
 ): void {
-  const newTheme: ThemeInforamtion = {
-    repo: repositoryPath,
-    lastUpdate: checksumForString(themeCss),
-  };
-  plugin.settings.themesList.unshift(newTheme);
-  void plugin.saveSettings();
+    const newTheme: ThemeInforamtion = {
+        repo: repositoryPath,
+        lastUpdate: checksumForString(themeCss)
+    };
+    plugin.settings.themesList.unshift(newTheme);
+    void plugin.saveSettings();
 }
 
 /**
@@ -117,14 +114,9 @@ export function addBetaThemeToList(
  * @param repositoryPath - path to the GitHub repository
  *
  */
-export function existBetaThemeinInList(
-  plugin: ThePlugin,
-  repositoryPath: string
-): boolean {
-  const testIfThemExists = plugin.settings.themesList.find(
-    (t) => t.repo === repositoryPath
-  );
-  return testIfThemExists ? true : false;
+export function ExistBetaThemeinInList(plugin: ThePlugin, repositoryPath: string): boolean {
+    const testIfThemExists = plugin.settings.themesList.find((t) => t.repo === repositoryPath);
+    return !!testIfThemExists;
 }
 
 /**
@@ -135,15 +127,15 @@ export function existBetaThemeinInList(
  * @param checksum - checksum of file. In past we used the date of file update, but this proved to not be consisent with the GitHub cache.
  *
  */
-export function updateBetaThemeLastUpdateChecksum(
-  plugin: ThePlugin,
-  repositoryPath: string,
-  checksum: string
+export function UpdateBetaThemeLastUpdateChecksum(
+    plugin: ThePlugin,
+    repositoryPath: string,
+    checksum: string
 ): void {
-  plugin.settings.themesList.forEach((t) => {
-    if (t.repo === repositoryPath) {
-      t.lastUpdate = checksum;
-      void plugin.saveSettings();
-    }
-  });
+    plugin.settings.themesList.forEach((t) => {
+        if (t.repo === repositoryPath) {
+            t.lastUpdate = checksum;
+            void plugin.saveSettings();
+        }
+    });
 }

@@ -136,11 +136,14 @@ const config = tseslint.config({
         ],
         "@typescript-eslint/restrict-plus-operands": "error",
         "@typescript-eslint/array-type": "error",
-        "@typescript-eslint/consistent-type-imports": ["error", {
-            "disallowTypeAnnotations": true,
-            "fixStyle": 'separate-type-imports',
-            "prefer": 'type-imports',
-          }],
+        "@typescript-eslint/consistent-type-imports": [
+            "error",
+            {
+                disallowTypeAnnotations: true,
+                fixStyle: "separate-type-imports",
+                prefer: "type-imports"
+            }
+        ],
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/prefer-string-starts-ends-with": "off",
         "no-console": 1, // Means warning

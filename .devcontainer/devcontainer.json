@@ -1,44 +1,44 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
 {
-	"name": "Node.js & TypeScript",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/typescript-node:24-bookworm",
-	"features": {
-		"ghcr.io/devcontainers/features/node:1": {
-			"version": "v24.8.0"
-		}
-	},
-	"mounts": [
-		"type=bind,source=${localWorkspaceFolder},target=/work",
-		"type=bind,source=/var/home/${localEnv:USER}/.ssh,target=/home/node/.ssh,readonly",
-	],
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"google.gemini-cli-vscode-ide-companion",
-				"google.geminicodeassist",
-				"esbenp.prettier-vscode",  // Prettier formatter
-				"dbaeumer.vscode-eslint"   // ESLint linter
-			],
-			"settings": {
-				"editor.wordWrap": "on"
-			}
-		}
-	}
+    "name": "Node.js & TypeScript",
+    // Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+    "image": "mcr.microsoft.com/devcontainers/typescript-node:24-bookworm",
+    "features": {
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "v24.8.0"
+        }
+    },
+    "mounts": [
+        "type=bind,source=${localWorkspaceFolder},target=/work",
+        "type=bind,source=/var/home/${localEnv:USER}/.ssh,target=/home/node/.ssh,readonly"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "google.gemini-cli-vscode-ide-companion",
+                "google.geminicodeassist",
+                "esbenp.prettier-vscode", // Prettier formatter
+                "dbaeumer.vscode-eslint" // ESLint linter
+            ],
+            "settings": {
+                "editor.wordWrap": "on"
+            }
+        }
+    }
 
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
+    // Features to add to the dev container. More info: https://containers.dev/features.
+    // "features": {},
 
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
+    // Use 'forwardPorts' to make a list of ports inside the container available locally.
+    // "forwardPorts": [],
 
-	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "yarn install",
+    // Use 'postCreateCommand' to run commands after the container is created.
+    // "postCreateCommand": "yarn install",
 
-	// Configure tool-specific properties.
-	// "customizations": {},
+    // Configure tool-specific properties.
+    // "customizations": {},
 
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
+    // Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
+    // "remoteUser": "root"
 }
