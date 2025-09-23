@@ -23,3 +23,6 @@ dist/**/*
 .VolumeIcon.icns
 .com.apple.timemachine.donotpresent
 .pnpm-store
+
+# Coverage
+coverage
