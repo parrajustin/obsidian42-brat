@@ -19,6 +19,7 @@ fs.copyFile("styles.css", "dist/styles.css", (err) => {
 });
 
 const prod = process.argv[2] === "production";
+const watch = process.argv[3] !== "false" && !prod;
 
 const context = await esbuild.context({
     banner: {
@@ -52,11 +53,21 @@ const context = await esbuild.context({
     metafile: prod,
 });
 
-if (prod) {
+if (prod || !watch) {
     const result = await context.rebuild();
 
     await writeFile("dist/meta.json", JSON.stringify(result.metafile, undefined, 2));
-    process.exit(0);
 } else {
     await context.watch();
+    process.exit(0);
 }
+
+// If dev lets make a dev manifest.json file.
+const manifestFile = path.join("./manifest.json");
+const data = await readFile(manifestFile, "utf-8");
+const json = JSON.parse(data);
+
+// Update version data.
+json.version = prod ? version : `v${process.env.npm_package_version}-dev`;
+await writeFile(path.join("dist", "manifest.json"), JSON.stringify(json, undefined, 2));
+process.exit(0);

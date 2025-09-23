@@ -134,7 +134,7 @@ const config: Config = {
     // runner: "jest-runner",
 
     // The paths to modules that run some code to configure or set up the testing environment before each test
-    // setupFiles: [],
+    // setupFiles: ["./tests/jest.setup.js"],
 
     // A list of paths to modules that run some code to configure or set up the testing framework before each test
     // setupFilesAfterEnv: [],
@@ -147,7 +147,7 @@ const config: Config = {
 
     // The test environment that will be used for testing
     // testEnvironment: "jest-environment-node",
-    // testEnvironment: "jest-environment-jsdom",
+    testEnvironment: "./tests/environment.cjs",
 
     // Options that will be passed to the testEnvironment
     // testEnvironmentOptions: {},
