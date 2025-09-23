@@ -1,6 +1,7 @@
 import type ThePlugin from "../main";
 import type { App, ToggleComponent, ButtonComponent } from "obsidian";
 import { PluginSettingTab, Setting } from "obsidian";
+import { FIXED_PLUGIN_REPOS, FIXED_PLUGINS } from "../fixed_plugins";
 
 const createLink = (githubResource: string, optionalText?: string): DocumentFragment => {
     const newLink = new DocumentFragment();
@@ -67,6 +68,51 @@ export class BratSettingsTab extends PluginSettingTab {
             });
 
         containerEl.createEl("hr");
+        containerEl.createEl("h2", { text: "Justin Plugin List" });
+        const enabledPlugins = new Set(this.plugin.settings.pluginList);
+        for (const fixedPlugin of FIXED_PLUGINS) {
+            const isEnabled = enabledPlugins.has(fixedPlugin.repo);
+
+            let pluginVersion = "NULL";
+            const plugin = this.plugin.app.plugins.plugins[fixedPlugin.localName];
+            if (plugin !== undefined) {
+                pluginVersion = plugin.manifest.version;
+            }
+            const desc = new DocumentFragment();
+            const textNode = document.createTextNode(fixedPlugin.desc);
+            desc.appendChild(textNode);
+            if (isEnabled) {
+                desc.appendChild(document.createElement("br"));
+                const versionText = document.createTextNode(`Installed Version: ${pluginVersion}`);
+                desc.appendChild(versionText);
+            }
+
+            containerEl.createEl("div", {}, (div) => {
+                new Setting(div)
+                    .setName(fixedPlugin.name)
+                    .setDesc(desc)
+                    .addToggle((cb) => {
+                        cb.setValue(isEnabled);
+                        cb.onChange((value) => {
+                            if (value) {
+                                void this.plugin.betaPlugins.addPlugin(
+                                    fixedPlugin.repo,
+                                    false,
+                                    false,
+                                    false,
+                                    "",
+                                    false,
+                                    false
+                                );
+                            } else {
+                                this.plugin.betaPlugins.deletePlugin(fixedPlugin.repo);
+                            }
+                        });
+                    });
+            });
+        }
+
+        containerEl.createEl("hr");
         containerEl.createEl("h2", { text: "Beta Plugin List" });
         containerEl.createEl("div", {
             text: `The following is a list of beta plugins added via the command palette "Add a beta plugin for testing" or "Add a beta plugin with frozen version for testing". A frozen version is a specific release of a plugin based on its releease tag. `
@@ -93,6 +139,9 @@ export class BratSettingsTab extends PluginSettingTab {
             this.plugin.settings.pluginSubListFrozenVersion.map((x) => x.repo)
         );
         for (const bp of this.plugin.settings.pluginList) {
+            if (FIXED_PLUGIN_REPOS.has(bp)) {
+                continue;
+            }
             if (pluginSubListFrozenVersionNames.has(bp)) {
                 continue;
             }
