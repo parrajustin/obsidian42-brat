@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/parrajustin/obsidian42-brat/compare/v2.1.1...v2.2.0) (2025-10-19)
+
+
+### Features
+
+* Add templater plugin ([f27f8d4](https://github.com/parrajustin/obsidian42-brat/commit/f27f8d4c0317116d9ba215e274700904208a8f89))
+
 ## [2.1.1](https://github.com/parrajustin/obsidian42-brat/compare/v2.1.0...v2.1.1) (2025-09-23)
 
 
