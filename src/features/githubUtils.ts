@@ -6,7 +6,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable no-console */
 import type { PluginManifest } from "obsidian";
-import { request } from "obsidian";
+import { request, requestUrl } from "obsidian";
+import type { Result } from "standard-ts-lib/src/result";
+import { Err, Ok } from "standard-ts-lib/src/result";
+import type { StatusError } from "standard-ts-lib/src/status_error";
+import { NotFoundError } from "standard-ts-lib/src/status_error";
+import { WrapPromise } from "standard-ts-lib/src/wrap_promise";
+import { WrapToResult } from "standard-ts-lib/src/wrap_to_result";
 
 const GITHUB_RAW_USERCONTENT_PATH = "https://raw.githubusercontent.com/";
 
@@ -118,6 +124,82 @@ export const grabReleaseFileFromRepository = async (
         if (debugLogging) console.log("error in grabReleaseFileFromRepository", URL, error);
         return null;
     }
+};
+
+/**
+ * Finds a packaged .tar.gz (or .tgz) asset attached to a release and downloads
+ * it as binary data.
+ *
+ * @param repository - path to GitHub repository in format USERNAME/repository
+ * @param version    - version (tag_name) of release to retrieve
+ *
+ * @returns Ok with the raw bytes of the tarball asset, or Err if the release
+ *          or asset does not exist or the download failed
+ */
+export const grabReleaseTarballFromRepository = async (
+    repository: string,
+    version: string,
+    personalAccessToken = ""
+): Promise<Result<ArrayBuffer, StatusError>> => {
+    const releasesUrl = `https://api.github.com/repos/${repository}/releases`;
+    const releasesResponse = await WrapPromise(
+        request({
+            url: releasesUrl,
+            headers: personalAccessToken
+                ? {
+                      Authorization: `Token ${personalAccessToken}`
+                  }
+                : {}
+        }),
+        `grabReleaseTarballFromRepository: failed to fetch ${releasesUrl}`
+    );
+    if (releasesResponse.err) return releasesResponse;
+
+    const releases = WrapToResult(
+        () => JSON.parse(releasesResponse.safeUnwrap()) as Release[],
+        `grabReleaseTarballFromRepository: invalid releases response from ${releasesUrl}`
+    );
+    if (releases.err) return releases;
+
+    const release = releases.safeUnwrap().find((release: Release) => release.tag_name === version);
+    if (!release) {
+        return Err(
+            NotFoundError(`grabReleaseTarballFromRepository: no release for tag "${version}"`)
+        );
+    }
+    // only deliberately packaged assets are considered; the auto-generated
+    // "Source code (tar.gz)" is not part of the assets list
+    const asset = release.assets.find(
+        (asset: { name: string }) => asset.name.endsWith(".tar.gz") || asset.name.endsWith(".tgz")
+    );
+    if (!asset) {
+        return Err(
+            NotFoundError(
+                `grabReleaseTarballFromRepository: release "${version}" has no .tar.gz asset`
+            )
+        );
+    }
+
+    const download = await WrapPromise(
+        requestUrl({
+            url: asset.url,
+            headers: {
+                Accept: "application/octet-stream",
+                ...(personalAccessToken ? { Authorization: `Token ${personalAccessToken}` } : {})
+            }
+        }),
+        `grabReleaseTarballFromRepository: failed to download asset "${asset.name}"`
+    );
+    if (download.err) return download;
+    const response = download.safeUnwrap();
+    if (response.status !== 200) {
+        return Err(
+            NotFoundError(
+                `grabReleaseTarballFromRepository: asset "${asset.name}" returned status ${response.status}`
+            )
+        );
+    }
+    return Ok(response.arrayBuffer);
 };
 
 /**

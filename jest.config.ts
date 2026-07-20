@@ -90,7 +90,10 @@ const config: Config = {
     // ],
 
     // A map from regular expressions to module names or to arrays of module names that allow to stub out resources with a single module
-    // moduleNameMapper: {},
+    moduleNameMapper: {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        "^obsidian$": "<rootDir>/tests/__mocks__/obsidian.ts"
+    },
 
     // An array of regexp pattern strings, matched against all module paths before considered 'visible' to the module loader
     // modulePathIgnorePatterns: [],
@@ -177,15 +180,15 @@ const config: Config = {
 
     // A map from regular expressions to paths to transformers
     transform: {
+        // @swc/jest always emits CommonJS, which is required because standard-ts-lib
+        // is a "type": "module" package consumed as TypeScript source
         // eslint-disable-next-line @typescript-eslint/naming-convention
-        "^.+.tsx?$": ["ts-jest", {}]
+        "^.+.tsx?$": ["@swc/jest", { jsc: { parser: { syntax: "typescript" } } }]
     },
 
     // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
-    // transformIgnorePatterns: [
-    //   "/node_modules/",
-    //   "\\.pnp\\.[^\\/]+$"
-    // ],
+    // standard-ts-lib is consumed as TypeScript source through pnpm, so it must be transformed
+    transformIgnorePatterns: ["/node_modules/(?!\\.pnpm|standard-ts-lib)"],
 
     // An array of regexp pattern strings that are matched against all modules before the module loader will automatically return a mock for them
     // unmockedModulePathPatterns: undefined,

@@ -1,7 +1,17 @@
 /* eslint-disable no-console */
 import type ThePlugin from "../main";
 import AddNewPluginModal from "../ui/AddNewPluginModal";
-import { grabManifestJsonFromRepository, grabReleaseFileFromRepository } from "./githubUtils";
+import {
+    grabManifestJsonFromRepository,
+    grabReleaseFileFromRepository,
+    grabReleaseTarballFromRepository
+} from "./githubUtils";
+import { extractTarGz } from "../utils/tarball";
+import type { StatusResult } from "standard-ts-lib/src/result";
+import { Err, Ok } from "standard-ts-lib/src/result";
+import type { StatusError } from "standard-ts-lib/src/status_error";
+import { FailedPreconditionError } from "standard-ts-lib/src/status_error";
+import { WrapPromise } from "standard-ts-lib/src/wrap_promise";
 import type { PluginManifest } from "obsidian";
 import { normalizePath, Notice, requireApiVersion, apiVersion } from "obsidian";
 import { AddBetaPluginToList } from "../settings";
@@ -15,6 +25,11 @@ interface ReleaseFiles {
     mainJs: string | null;
     manifest: string | null;
     styles: string | null;
+    /**
+     * full set of files from a packaged .tar.gz release asset, when the
+     * release provides one. null means the classic fixed-file download was used
+     */
+    tarball: Map<string, Uint8Array> | null;
 }
 
 /**
@@ -131,7 +146,12 @@ export default class BetaPlugins {
 
         console.log({ reallyGetManifestOrNot, version });
 
+        // prefer a packaged .tar.gz release asset when the release has one
+        const tarballFiles = await this.getReleaseTarballFiles(repositoryPath, version);
+        if (tarballFiles !== null) return tarballFiles;
+
         return {
+            tarball: null,
             mainJs: await grabReleaseFileFromRepository(
                 repositoryPath,
                 version,
@@ -159,6 +179,65 @@ export default class BetaPlugins {
     }
 
     /**
+     * Attempts to download and extract a packaged .tar.gz asset from the
+     * release. Returns null if the release has no tarball asset or if the
+     * archive does not contain at least main.js and manifest.json, in which
+     * case the caller falls back to the classic fixed-file downloads.
+     *
+     * @param repositoryPath - path to the GitHub repository
+     * @param version        - release tag to download
+     *
+     * @returns release files with the full tarball contents, or null
+     */
+    public async getReleaseTarballFiles(
+        repositoryPath: string,
+        version: string
+    ): Promise<ReleaseFiles | null> {
+        const debugLogging = this.plugin.settings.debuggingMode;
+        const tarball = await grabReleaseTarballFromRepository(
+            repositoryPath,
+            version,
+            this.plugin.settings.personalAccessToken
+        );
+        if (tarball.err) {
+            if (debugLogging)
+                console.log("BRAT: no usable release tarball", tarball.val.toString(false));
+            return null;
+        }
+
+        const extracted = await extractTarGz(tarball.safeUnwrap());
+        if (extracted.err) {
+            if (debugLogging)
+                console.log(
+                    "BRAT: failed to extract release tarball",
+                    extracted.val.toString(false)
+                );
+            return null;
+        }
+        const files = extracted.safeUnwrap();
+
+        const mainJs = files.get("main.js");
+        const manifest = files.get("manifest.json");
+        if (mainJs === undefined || manifest === undefined) {
+            if (debugLogging)
+                console.log(
+                    "BRAT: release tarball is missing main.js or manifest.json, falling back",
+                    Array.from(files.keys())
+                );
+            return null;
+        }
+
+        const decoder = new TextDecoder();
+        const styles = files.get("styles.css");
+        return {
+            mainJs: decoder.decode(mainJs),
+            manifest: decoder.decode(manifest),
+            styles: styles === undefined ? null : decoder.decode(styles),
+            tarball: files
+        };
+    }
+
+    /**
      * Writes the plugin release files to the local obsidian .plugins folder
      *
      * @param betaPluginId - the id of the plugin (not the repository path)
@@ -169,6 +248,16 @@ export default class BetaPlugins {
         betaPluginId: string,
         relFiles: ReleaseFiles
     ): Promise<void> {
+        if (relFiles.tarball !== null) {
+            const swapped = await this.writeTarballFilesToPluginFolder(betaPluginId, relFiles);
+            if (swapped) return;
+            // staging failed validation - fall back to writing the classic three files
+            if (this.plugin.settings.debuggingMode)
+                console.log(
+                    "BRAT: tarball staging failed, falling back to fixed-file install",
+                    betaPluginId
+                );
+        }
         const pluginTargetFolderPath =
             normalizePath(this.plugin.app.vault.configDir + "/plugins/" + betaPluginId) + "/";
         const { adapter } = this.plugin.app.vault;
@@ -531,5 +620,193 @@ export default class BetaPlugins {
             : manifests.filter(
                   (manifest) => !enabledPlugins.find((pluginName) => manifest.id === pluginName.id)
               );
+    }
+
+    /**
+     * Writes a packaged tarball release into the plugin folder. The extracted
+     * files are first staged into a temp folder and validated (main.js and
+     * manifest.json must exist) before the existing plugin files are removed
+     * and replaced. data.json is preserved so user settings survive the swap.
+     *
+     * @param betaPluginId - the id of the plugin (not the repository path)
+     * @param relFiles     - release files including the extracted tarball map
+     *
+     * @returns true if the staged files were validated and swapped in
+     */
+    private async writeTarballFilesToPluginFolder(
+        betaPluginId: string,
+        relFiles: ReleaseFiles
+    ): Promise<boolean> {
+        if (relFiles.tarball === null) return false;
+        const configDir = this.plugin.app.vault.configDir;
+        const stagingFolderPath = normalizePath(`${configDir}/brat-staging/${betaPluginId}`);
+
+        const swapResult = await this.stageValidateAndSwapTarball(
+            betaPluginId,
+            stagingFolderPath,
+            relFiles.tarball,
+            relFiles.manifest ?? ""
+        );
+        // always clean up the staging folder, even when the swap failed
+        await this.removeFolderIfExists(stagingFolderPath);
+        if (swapResult.err) {
+            if (this.plugin.settings.debuggingMode)
+                console.log(
+                    "BRAT: tarball install failed",
+                    betaPluginId,
+                    swapResult.val.toString(false)
+                );
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Stages the extracted tarball files into the staging folder, validates
+     * that main.js and manifest.json exist, then removes the existing plugin
+     * files and copies the staged files into place. data.json is preserved so
+     * user settings survive the swap. The caller cleans up the staging folder.
+     */
+    private async stageValidateAndSwapTarball(
+        betaPluginId: string,
+        stagingFolderPath: string,
+        tarballFiles: Map<string, Uint8Array>,
+        manifestContents: string
+    ): Promise<StatusResult<StatusError>> {
+        const { adapter } = this.plugin.app.vault;
+        const pluginTargetFolderPath = normalizePath(
+            `${this.plugin.app.vault.configDir}/plugins/${betaPluginId}`
+        );
+
+        // stage the extracted files into a clean temp folder
+        const cleared = await this.removeFolderIfExists(stagingFolderPath);
+        if (cleared.err) return cleared;
+        for (const [name, content] of tarballFiles) {
+            const filePath = normalizePath(`${stagingFolderPath}/${name}`);
+            const folderReady = await this.ensureFolderExists(
+                filePath.slice(0, filePath.lastIndexOf("/"))
+            );
+            if (folderReady.err) return folderReady;
+            const written = await WrapPromise(
+                adapter.writeBinary(filePath, content.buffer as ArrayBuffer),
+                `BRAT: failed to stage ${name}`
+            );
+            if (written.err) return written;
+        }
+        // the caller may have replaced the manifest with the beta manifest,
+        // so the staged manifest.json is written from the release files
+        const manifestWritten = await WrapPromise(
+            adapter.write(normalizePath(`${stagingFolderPath}/manifest.json`), manifestContents),
+            "BRAT: failed to stage manifest.json"
+        );
+        if (manifestWritten.err) return manifestWritten;
+
+        // validate the staged release before touching the plugin folder
+        for (const requiredFile of ["main.js", "manifest.json"]) {
+            const exists = await WrapPromise(
+                adapter.exists(normalizePath(`${stagingFolderPath}/${requiredFile}`)),
+                `BRAT: failed to check staged ${requiredFile}`
+            );
+            if (exists.err) return exists;
+            if (!exists.safeUnwrap()) {
+                return Err(
+                    FailedPreconditionError(
+                        `BRAT: staged tarball is missing ${requiredFile} for ${betaPluginId}`
+                    )
+                );
+            }
+        }
+
+        // remove the existing plugin files, keeping data.json (user settings)
+        const targetExists = await WrapPromise(
+            adapter.exists(pluginTargetFolderPath),
+            "BRAT: failed to check plugin folder"
+        );
+        if (targetExists.err) return targetExists;
+        if (targetExists.safeUnwrap()) {
+            const listing = await WrapPromise(
+                adapter.list(pluginTargetFolderPath),
+                "BRAT: failed to list plugin folder"
+            );
+            if (listing.err) return listing;
+            for (const file of listing.safeUnwrap().files) {
+                if (file.endsWith("/data.json")) continue;
+                const removed = await WrapPromise(
+                    adapter.remove(file),
+                    `BRAT: failed to remove ${file}`
+                );
+                if (removed.err) return removed;
+            }
+            for (const folder of listing.safeUnwrap().folders) {
+                const removed = await WrapPromise(
+                    adapter.rmdir(folder, true),
+                    `BRAT: failed to remove folder ${folder}`
+                );
+                if (removed.err) return removed;
+            }
+        } else {
+            const created = await this.ensureFolderExists(pluginTargetFolderPath);
+            if (created.err) return created;
+        }
+
+        // copy the validated files into place
+        for (const name of tarballFiles.keys()) {
+            const targetPath = normalizePath(`${pluginTargetFolderPath}/${name}`);
+            const folderReady = await this.ensureFolderExists(
+                targetPath.slice(0, targetPath.lastIndexOf("/"))
+            );
+            if (folderReady.err) return folderReady;
+            const copied = await WrapPromise(
+                adapter.copy(normalizePath(`${stagingFolderPath}/${name}`), targetPath),
+                `BRAT: failed to copy ${name} into plugin folder`
+            );
+            if (copied.err) return copied;
+        }
+        return Ok();
+    }
+
+    /**
+     * Creates the folder and any missing parent folders.
+     */
+    private async ensureFolderExists(folderPath: string): Promise<StatusResult<StatusError>> {
+        const { adapter } = this.plugin.app.vault;
+        const parts = folderPath.split("/");
+        let current = "";
+        for (const part of parts) {
+            current = current === "" ? part : `${current}/${part}`;
+            const exists = await WrapPromise(
+                adapter.exists(current),
+                `BRAT: failed to check folder ${current}`
+            );
+            if (exists.err) return exists;
+            if (!exists.safeUnwrap()) {
+                const made = await WrapPromise(
+                    adapter.mkdir(current),
+                    `BRAT: failed to create folder ${current}`
+                );
+                if (made.err) return made;
+            }
+        }
+        return Ok();
+    }
+
+    /**
+     * Recursively removes the folder if it exists.
+     */
+    private async removeFolderIfExists(folderPath: string): Promise<StatusResult<StatusError>> {
+        const { adapter } = this.plugin.app.vault;
+        const exists = await WrapPromise(
+            adapter.exists(folderPath),
+            `BRAT: failed to check folder ${folderPath}`
+        );
+        if (exists.err) return exists;
+        if (exists.safeUnwrap()) {
+            const removed = await WrapPromise(
+                adapter.rmdir(folderPath, true),
+                `BRAT: failed to remove folder ${folderPath}`
+            );
+            if (removed.err) return removed;
+        }
+        return Ok();
     }
 }
