@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.4.0](https://github.com/parrajustin/obsidian42-brat/compare/v2.3.0...v2.4.0) (2026-07-20)
+
+
+### Features
+
+* add chinese character practice plugin ([e802e39](https://github.com/parrajustin/obsidian42-brat/commit/e802e396a7f708a483878017edcb8aa77f7f076b))
+
 ## [2.3.0](https://github.com/parrajustin/obsidian42-brat/compare/v2.2.0...v2.3.0) (2026-07-20)
 
 
