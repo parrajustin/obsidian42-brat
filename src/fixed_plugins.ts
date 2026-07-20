@@ -41,6 +41,12 @@ export const FIXED_PLUGINS: FixedPlugins[] = [
         repo: "parrajustin/Templater",
         localName: "templater-obsidian",
         desc: "Create and use templates."
+    },
+    {
+        name: "Hanzi Practice",
+        repo: "parrajustin/obsidian-hanzi-practice",
+        localName: "hanzi-practice",
+        desc: "Practice Chinese characters."
     }
 ];
 export const FIXED_PLUGIN_REPOS = new Set(FIXED_PLUGINS.map((x) => x.repo));
