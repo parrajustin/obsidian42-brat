@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       standard-ts-lib:
-        specifier: file:../../common/standard-ts-lib
-        version: file:../../common/standard-ts-lib
+        specifier: github:parrajustin/standard-ts-lib
+        version: https://codeload.github.com/parrajustin/standard-ts-lib/tar.gz/f7d55ef31463c091293ad66a653a04c1e43c3692
     devDependencies:
       '@eslint/js':
         specifier: 9.10.0
@@ -2118,8 +2118,9 @@ packages:
     resolution: {integrity: sha512-XlkWvfIm6RmsWtNJx+uqtKLS8eqFbxUg0ZzLXqY0caEy9l7hruX8IpiDnjsLavoBgqCCR71TqWO8MaXYheJ3RQ==}
     engines: {node: '>=10'}
 
-  standard-ts-lib@file:../../common/standard-ts-lib:
-    resolution: {directory: ../../common/standard-ts-lib, type: directory}
+  standard-ts-lib@https://codeload.github.com/parrajustin/standard-ts-lib/tar.gz/f7d55ef31463c091293ad66a653a04c1e43c3692:
+    resolution: {tarball: https://codeload.github.com/parrajustin/standard-ts-lib/tar.gz/f7d55ef31463c091293ad66a653a04c1e43c3692}
+    version: 1.0.0
 
   string-argv@0.3.2:
     resolution: {integrity: sha512-aqD2Q0144Z+/RqG52NeHEkZauTAUWJO8c6yTftGJKO3Tja5tUgIfmIl6kExvhtxSDP7fXB6DvzkfMpCd/F3G+Q==}
@@ -4711,7 +4712,7 @@ snapshots:
     dependencies:
       escape-string-regexp: 2.0.0
 
-  standard-ts-lib@file:../../common/standard-ts-lib: {}
+  standard-ts-lib@https://codeload.github.com/parrajustin/standard-ts-lib/tar.gz/f7d55ef31463c091293ad66a653a04c1e43c3692: {}
 
   string-argv@0.3.2: {}
 

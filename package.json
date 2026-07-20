@@ -19,7 +19,7 @@
     "author": "Justin Parra",
     "license": "MIT",
     "dependencies": {
-        "standard-ts-lib": "file:../../common/standard-ts-lib"
+        "standard-ts-lib": "github:parrajustin/standard-ts-lib"
     },
     "repository": {
         "type": "git",
