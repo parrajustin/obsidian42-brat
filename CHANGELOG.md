@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.3.0](https://github.com/parrajustin/obsidian42-brat/compare/v2.2.0...v2.3.0) (2026-07-20)
+
+
+### Features
+
+* add support for tar packages ([aa67a74](https://github.com/parrajustin/obsidian42-brat/commit/aa67a74aa0fdcdb150839c67934e400b752a5ad1))
+
+
+### Bug Fixes
+
+* change to git copy of lib ([08dcfeb](https://github.com/parrajustin/obsidian42-brat/commit/08dcfeb2b06837515f763aca92b87f4e75d78377))
+
 ## [2.2.0](https://github.com/parrajustin/obsidian42-brat/compare/v2.1.1...v2.2.0) (2025-10-19)
 
 
