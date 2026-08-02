@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.5.0](https://github.com/parrajustin/obsidian42-brat/compare/v2.4.0...v2.5.0) (2026-08-02)
+
+
+### Features
+
+* add bug collector ([5648296](https://github.com/parrajustin/obsidian42-brat/commit/564829646f904a7c64b14c75ef9681cdc26eaed3))
+
+
+### Bug Fixes
+
+* add work around for release please ([57fa37a](https://github.com/parrajustin/obsidian42-brat/commit/57fa37ad3c1c1fda1681d71a70c2ab6aecb37ee7))
+
 ## [2.4.0](https://github.com/parrajustin/obsidian42-brat/compare/v2.3.0...v2.4.0) (2026-07-20)
 
 
