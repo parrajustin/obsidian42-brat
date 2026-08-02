@@ -35,6 +35,21 @@ command -v gh >/dev/null 2>&1 || { echo "error: GitHub CLI (gh) is required"; ex
 command -v pnpm >/dev/null 2>&1 || { echo "error: pnpm is required"; exit 1; }
 gh auth status >/dev/null 2>&1 || { echo "error: gh is not authenticated (gh auth login)"; exit 1; }
 
+# This repo is a FORK, so `gh` refuses to guess whether a command targets our
+# fork or upstream ("No default remote repository has been set") — it would
+# otherwise only blow up at the very last step, after tagging and pushing.
+# Derive the slug from origin and pass it explicitly to every gh call.
+REPO_SLUG=$(git remote get-url origin |
+  sed -E 's#^(git@github\.com:|ssh://git@github\.com/|https://github\.com/)##; s#\.git$##')
+case "$REPO_SLUG" in
+  */*) ;;
+  *) echo "error: could not derive owner/repo from origin ($REPO_SLUG)"; exit 1 ;;
+esac
+gh repo view "$REPO_SLUG" >/dev/null 2>&1 || {
+  echo "error: gh cannot reach $REPO_SLUG (wrong account, or no access?)"
+  exit 1
+}
+
 if ! git diff --quiet || ! git diff --cached --quiet; then
   echo "error: working tree is not clean, commit or stash first"
   exit 1
@@ -51,8 +66,16 @@ fi
 # cuts releases of its own on pushes to main — it creates the tag AND commits a
 # version bump — so a stale local checkout would otherwise happily build a
 # release whose tag/push is rejected at the very last step.
+# Deliberately NOT --tags: if a previous run left a local tag pointing at a
+# different commit than the remote's tag of the same name, fetching tags fails
+# with "would clobber existing tag" and (under set -e) kills the release before
+# it prints anything useful. Remote tags are queried with ls-remote below,
+# which never touches the local tag namespace.
 echo "Fetching origin..."
-git fetch --tags --prune origin
+if ! git fetch --prune origin; then
+  echo "error: could not fetch origin — check network/SSH auth and retry"
+  exit 1
+fi
 
 UPSTREAM="origin/$BRANCH"
 if git rev-parse -q --verify "refs/remotes/$UPSTREAM" >/dev/null; then
@@ -88,14 +111,19 @@ esac
 
 TAG="v$NEW_VERSION"
 
-# the fetch above brought down remote tags, so this covers both local tags and
-# ones CI already published (the case that used to fail only at push time,
-# after the whole build had run)
+# Check BOTH namespaces — a tag can exist locally (an aborted run) or on origin
+# (CI released it) — and catch it here rather than at push time, after the whole
+# build has run.
 if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-  echo "error: tag $TAG already exists"
-  echo "if CI (release-please) already released it, that version is done —"
-  echo "pick a higher version, or upload assets to the existing release with:"
-  echo "  gh release upload $TAG dist/${PLUGIN_ID}-$TAG.tar.gz"
+  echo "error: tag $TAG already exists locally"
+  echo "if it is a leftover from an aborted run: git tag -d $TAG"
+  exit 1
+fi
+if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+  echo "error: tag $TAG already exists on origin"
+  echo "CI (release-please) most likely released it already — that version is"
+  echo "done. Pick a higher version, or add assets to the existing release:"
+  echo "  gh release upload $TAG dist/${PLUGIN_ID}-$TAG.tar.gz --repo $REPO_SLUG"
   exit 1
 fi
 
@@ -217,6 +245,7 @@ gh release create "$TAG" \
   dist/main.js \
   dist/manifest.json \
   dist/styles.css \
+  --repo "$REPO_SLUG" \
   --title "Release $TAG" \
   --notes "Release $TAG"
 
