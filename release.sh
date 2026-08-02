@@ -47,9 +47,27 @@ if [ "$BRANCH" != "main" ] && [ "${ALLOW_BRANCH:-}" != "1" ]; then
   exit 1
 fi
 
+# Sync with the remote BEFORE deciding anything: this repo's CI (release-please)
+# cuts releases of its own on pushes to main — it creates the tag AND commits a
+# version bump — so a stale local checkout would otherwise happily build a
+# release whose tag/push is rejected at the very last step.
+echo "Fetching origin..."
+git fetch --tags --prune origin
+
+UPSTREAM="origin/$BRANCH"
+if git rev-parse -q --verify "refs/remotes/$UPSTREAM" >/dev/null; then
+  BEHIND=$(git rev-list --count "HEAD..$UPSTREAM")
+  if [ "$BEHIND" -ne 0 ]; then
+    echo "error: local $BRANCH is $BEHIND commit(s) behind $UPSTREAM"
+    echo "run 'git pull --rebase' first (CI commits version bumps to main)"
+    exit 1
+  fi
+fi
+
 # package.json holds the BARE version; manifest.json/versions.json/tags carry
 # a leading "v" (version-bump.mjs establishes this convention).
 CURRENT=$(node -p "require('./package.json').version")
+PLUGIN_ID=$(node -p "require('./manifest.json').id")
 
 case "$BUMP" in
   patch|minor|major)
@@ -70,8 +88,14 @@ esac
 
 TAG="v$NEW_VERSION"
 
+# the fetch above brought down remote tags, so this covers both local tags and
+# ones CI already published (the case that used to fail only at push time,
+# after the whole build had run)
 if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
   echo "error: tag $TAG already exists"
+  echo "if CI (release-please) already released it, that version is done —"
+  echo "pick a higher version, or upload assets to the existing release with:"
+  echo "  gh release upload $TAG dist/${PLUGIN_ID}-$TAG.tar.gz"
   exit 1
 fi
 
@@ -132,7 +156,6 @@ echo "Building dist/..."
 pnpm run build
 
 # --- verify the tarball the fork will install --------------------------------
-PLUGIN_ID=$(node -p "require('./manifest.json').id")
 TARBALL="dist/${PLUGIN_ID}-${TAG}.tar.gz"
 [ -f "$TARBALL" ] || { echo "error: build did not produce $TARBALL"; exit 1; }
 
@@ -182,7 +205,8 @@ git add manifest.json package.json versions.json
 git commit -m "chore: release $TAG"
 BUMPED=0
 git tag "$TAG"
-git push origin HEAD "$TAG"
+# --atomic: never leave the branch pushed but the tag rejected (or vice versa)
+git push --atomic origin HEAD "$TAG"
 
 # --- github release ----------------------------------------------------------
 # the tarball is what this fork installs; the loose files are the fallback for
