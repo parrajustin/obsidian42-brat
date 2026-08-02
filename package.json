@@ -1,6 +1,6 @@
 {
     "name": "obsidian42-brat",
-    "version": "3.0.0",
+    "version": "4.0.0",
     "description": "Beta Reviewer's Autoupdate Tool.",
     "main": "main.js",
     "scripts": {
