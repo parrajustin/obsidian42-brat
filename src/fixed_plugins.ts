@@ -47,6 +47,12 @@ export const FIXED_PLUGINS: FixedPlugins[] = [
         repo: "parrajustin/obsidian-hanzi-practice",
         localName: "hanzi-practice",
         desc: "Practice Chinese characters."
+    },
+    {
+        name: "Bug Collector",
+        repo: "parrajustin/obsidian-bug-collector",
+        localName: "bug-collector",
+        desc: "Collects logs, traces and metrics from other plugins and creates bug reports."
     }
 ];
 export const FIXED_PLUGIN_REPOS = new Set(FIXED_PLUGINS.map((x) => x.repo));
