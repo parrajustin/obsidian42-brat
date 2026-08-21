@@ -1,0 +1,151 @@
+# obsidian42-brat — Beta Reviewer's Autoupdate Tool (fork installing plugins
+# from .tar.gz release assets).
+#
+# npm-script parity:
+#   build        -> :build        (esbuild bundle -> dist/ incl. release tarball)
+#   test         -> :test         (jest, @swc/jest transform)
+#   type-check   -> :type_check   (tsc --noEmit)
+#   lint         -> :lint         (eslint flat config, type-aware)
+#   dev          -> bazel run :dev          (watch mode, source tree)
+#   version      -> bazel run :version
+#   githubaction -> bazel run :githubaction
+
+load("@aspect_rules_jest//jest:defs.bzl", "jest_test")
+load("@aspect_rules_js//js:defs.bzl", "js_binary", "js_run_binary")
+load("@npm_obsidian42_brat//:defs.bzl", "npm_link_all_packages")
+load("@npm_obsidian42_brat//obsidian/obsidian42-brat:eslint/package_json.bzl", eslint_bin = "bin")
+load("@npm_obsidian42_brat//obsidian/obsidian42-brat:typescript/package_json.bzl", typescript_bin = "bin")
+
+exports_files([
+    "package.json",
+    "pnpm-lock.yaml",
+])
+
+# Links every npm dependency from the pnpm lockfile as :node_modules/<pkg>.
+npm_link_all_packages(name = "node_modules")
+
+# The package's own esbuild driver script (esbuild.config.mjs).
+js_binary(
+    name = "esbuild_config",
+    data = [
+        ":node_modules/builtin-modules",
+        ":node_modules/esbuild",
+    ],
+    entry_point = "esbuild.config.mjs",
+)
+
+# `npm run build` — bundles src/main.ts into dist/ (main.js, manifest.json,
+# styles.css, meta.json, <id>-<version>.tar.gz).
+js_run_binary(
+    name = "build",
+    srcs = glob(["src/**"]) + [
+        "manifest.json",
+        "package.json",
+        "styles.css",
+        "tsconfig.json",
+        ":node_modules/standard-ts-lib",
+        ":node_modules/tslib",
+    ],
+    args = ["production"],
+    chdir = package_name(),
+    out_dirs = ["dist"],
+    tool = ":esbuild_config",
+    visibility = ["//visibility:public"],
+)
+
+# `npm test` — jest with the @swc/jest transform (standard-ts-lib is consumed
+# as TypeScript source through the pnpm store, so it is transformed too).
+jest_test(
+    name = "test",
+    size = "large",
+    config = "jest.config.cjs",
+    data = glob([
+        "src/**",
+        "tests/**",
+    ]) + [
+        "package.json",
+        "tsconfig.json",
+        ":node_modules",
+    ],
+    node_modules = ":node_modules",
+)
+
+# `npm run type-check` — tsc --noEmit over src/ + tests/.
+typescript_bin.tsc_test(
+    name = "type_check",
+    args = [
+        "--noEmit",
+        "-p",
+        "tsconfig.json",
+    ],
+    chdir = package_name(),
+    data = glob([
+        "src/**",
+        "tests/**",
+    ]) + [
+        "package.json",
+        "tsconfig.json",
+        ":node_modules",
+    ],
+)
+
+# `npm run lint` — eslint flat config (type-aware, keyed off ./tsconfig.json).
+eslint_bin.eslint_test(
+    name = "lint",
+    args = [
+        ".",
+        "--ignore-pattern",
+        "**/*.js",
+    ],
+    chdir = package_name(),
+    data = glob([
+        "src/**",
+        "tests/**",
+    ]) + [
+        ".editorconfig",
+        ".prettierignore",
+        ".prettierrc.json",
+        "eslint.config.js",
+        "jest.config.cjs",
+        "package.json",
+        "tsconfig.json",
+        ":node_modules",
+    ],
+)
+
+# Host-coupled scripts: run from the real source tree via `bazel run`
+# (require a local `pnpm install`).
+sh_binary(
+    name = "dev",
+    srcs = ["//:run_in_package.sh"],
+    args = [
+        package_name(),
+        "node",
+        "esbuild.config.mjs",
+        "dev",
+        "false",
+    ],
+    tags = ["manual"],
+)
+
+sh_binary(
+    name = "version",
+    srcs = ["//:run_in_package.sh"],
+    args = [
+        package_name(),
+        "node",
+        "version-bump.mjs",
+    ],
+    tags = ["manual"],
+)
+
+sh_binary(
+    name = "githubaction",
+    srcs = ["//:run_in_package.sh"],
+    args = [
+        package_name(),
+        "node",
+        "version-github-action.mjs",
+    ],
+    tags = ["manual"],
+)

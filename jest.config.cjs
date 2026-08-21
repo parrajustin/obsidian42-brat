@@ -3,9 +3,12 @@
  * https://jestjs.io/docs/configuration
  */
 
-import type { Config } from "jest";
+// Converted from jest.config.ts so the config is loadable both by plain
+// `npx jest` and by Bazel's jest_test (which requires a .js/.cjs/.mjs/.json
+// config).
+/** @type {import('jest').Config} */
 
-const config: Config = {
+const config = {
     // All imported modules in your tests should be mocked automatically
     // automock: false,
 
@@ -91,7 +94,6 @@ const config: Config = {
 
     // A map from regular expressions to module names or to arrays of module names that allow to stub out resources with a single module
     moduleNameMapper: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         "^obsidian$": "<rootDir>/tests/__mocks__/obsidian.ts"
     },
 
@@ -182,13 +184,13 @@ const config: Config = {
     transform: {
         // @swc/jest always emits CommonJS, which is required because standard-ts-lib
         // is a "type": "module" package consumed as TypeScript source
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         "^.+.tsx?$": ["@swc/jest", { jsc: { parser: { syntax: "typescript" } } }]
     },
 
     // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
-    // standard-ts-lib is consumed as TypeScript source through pnpm, so it must be transformed
-    transformIgnorePatterns: ["/node_modules/(?!\\.pnpm|standard-ts-lib)"],
+    // standard-ts-lib is consumed as TypeScript source through pnpm (or the
+    // rules_js store under Bazel), so it must be transformed
+    transformIgnorePatterns: ["/node_modules/(?!\\.pnpm|\\.aspect_rules_js|standard-ts-lib)"],
 
     // An array of regexp pattern strings that are matched against all modules before the module loader will automatically return a mock for them
     // unmockedModulePathPatterns: undefined,
@@ -203,4 +205,4 @@ const config: Config = {
     // watchman: true,
 };
 
-export default config;
+module.exports = config;

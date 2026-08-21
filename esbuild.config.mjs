@@ -18,15 +18,21 @@ if you want to view the source, please visit the github repository of this plugi
 // extractor; styles.css is loaded automatically by Obsidian when present.
 const DIST_FILES = ["main.js", "manifest.json", "styles.css"];
 
-fs.copyFile("manifest.json", "dist/manifest.json", (err) => {
-    if (err) console.log(err);
-});
-fs.copyFile("styles.css", "dist/styles.css", (err) => {
-    if (err) console.log(err);
-});
-
 const prod = process.argv[2] === "production";
 const watch = process.argv[3] !== "false" && !prod;
+
+// Dev/watch convenience copies. Production writes dist/manifest.json itself
+// and emitTarball() copies styles.css, so skip these in prod — under Bazel
+// the copies would inherit the inputs' read-only mode and block the later
+// writeFile of dist/manifest.json.
+if (!prod) {
+    fs.copyFile("manifest.json", "dist/manifest.json", (err) => {
+        if (err) console.log(err);
+    });
+    fs.copyFile("styles.css", "dist/styles.css", (err) => {
+        if (err) console.log(err);
+    });
+}
 
 const context = await esbuild.context({
     banner: {
